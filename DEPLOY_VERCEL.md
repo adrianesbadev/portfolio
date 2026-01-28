@@ -55,9 +55,9 @@ Cuando termine, tendrás una URL tipo `portfolio-xxx.vercel.app`.
 
 ---
 
-## 3. Variables de entorno (EmailJS)
+## 3. Variables de entorno
 
-Para que el formulario de contacto funcione en producción:
+### EmailJS (formulario de contacto)
 
 1. En Vercel: abre tu proyecto → **Settings** → **Environment Variables**.
 2. Añade estas tres variables (con los valores que usas en EmailJS):
@@ -68,7 +68,19 @@ Para que el formulario de contacto funcione en producción:
    | `PUBLIC_EMAILJS_SERVICE_ID`    | tu service id |
    | `PUBLIC_EMAILJS_TEMPLATE_ID`   | tu template id |
 
-3. **Redeploy:** pestaña **Deployments** → menú ⋮ del último deploy → **Redeploy**.
+### URL del sitio (imagen OG, canonical, sitemap)
+
+Para que la **imagen Open Graph** (y el resto de URLs absolutas) se generen bien al compartir en LinkedIn/WhatsApp:
+
+1. En **Environment Variables** añade también:
+
+   | Name       | Value                                      |
+   |------------|--------------------------------------------|
+   | `SITE_URL` | `https://portfolio-adrianesba.vercel.app`  |
+
+   (Sin barra final. Si usas dominio propio, pon esa URL.)
+
+2. **Redeploy:** pestaña **Deployments** → menú ⋮ del último deploy → **Redeploy**.
 
 ---
 
