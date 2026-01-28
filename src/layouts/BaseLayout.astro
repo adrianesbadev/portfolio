@@ -1,0 +1,130 @@
+---
+import '../styles/global.css';
+import { personalInfo } from '../data/personal';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+}
+
+const {
+  title = `${personalInfo.name} - ${personalInfo.role}`,
+  description = personalInfo.bio,
+  image = '/og.png',
+  type = 'website',
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const fullImageURL = new URL(image, Astro.site);
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <!-- Script anti-flash: aplicar modo oscuro por defecto -->
+    <script is:inline>
+      (function() {
+        // Siempre aplicar modo oscuro
+        document.documentElement.classList.add('dark');
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Favicons completos -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    
+    <meta name="generator" content={Astro.generator} />
+    
+    <!-- Primary Meta Tags -->
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta name="author" content={personalInfo.fullName} />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href={canonicalURL} />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={fullImageURL} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="es_ES" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={fullImageURL} />
+    
+    <!-- Additional Meta Tags -->
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#a855f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": personalInfo.fullName,
+      "jobTitle": personalInfo.role,
+      "url": Astro.site,
+      "sameAs": [
+        personalInfo.social.github,
+        personalInfo.social.linkedin,
+      ],
+      "knowsAbout": ["Web Development", "Software Development", "Java", "Spring Boot", "JavaScript"],
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "ES"
+      }
+    })} />
+  </head>
+  <body>
+    <slot />
+
+    <!-- Web Vitals: métricas de rendimiento (LCP, CLS, INP, FCP, TTFB) -->
+    <script>
+      import { onCLS, onLCP, onINP, onFCP, onTTFB } from 'web-vitals';
+
+      function sendToAnalytics(metric) {
+        // En desarrollo: log en consola. En producción puedes enviar a Google Analytics, etc.
+        if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') {
+          console.log('[Web Vitals]', metric.name, metric.value, metric);
+        }
+        // Ejemplo para más adelante: gtag('event', metric.name, { value: metric.value, ... });
+      }
+
+      onCLS(sendToAnalytics);
+      onLCP(sendToAnalytics);
+      onINP(sendToAnalytics);
+      onFCP(sendToAnalytics);
+      onTTFB(sendToAnalytics);
+    </script>
+
+    <!-- Error tracking básico: captura errores globales (opcional: conectar Sentry después) -->
+    <script is:inline>
+      window.addEventListener('error', function (e) {
+        console.error('[Error]', e.message, e.filename, e.lineno);
+        // Opcional: Sentry.captureException(e.error);
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        console.error('[Unhandled Rejection]', e.reason);
+        // Opcional: Sentry.captureException(e.reason);
+      });
+    </script>
+  </body>
+</html>

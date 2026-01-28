@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Sitemap de Adrián Esquivel - Portfolio
+Sitemap: https://adrianesbadev.github.io/sitemap.xml
+

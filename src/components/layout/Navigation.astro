@@ -1,0 +1,31 @@
+---
+const navItems = [
+  { label: 'Inicio', href: '#home' },
+  { label: 'Proyectos', href: '#projects' },
+  { label: 'Sobre mí', href: '#about' },
+  { label: 'Experiencia', href: '#experience' },
+  { label: 'Contacto', href: '#contact' },
+];
+---
+
+<nav class="navigation" aria-label="Navegación principal">
+  <ul class="flex flex-col md:flex-row gap-6 md:gap-8">
+    {navItems.map((item) => (
+      <li>
+        <a
+          href={item.href}
+          class="text-neutral-700 dark:text-neutral-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200 font-medium text-sm md:text-base relative group"
+        >
+          {item.label}
+          <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .navigation a {
+    display: inline-block;
+  }
+</style>

@@ -1,0 +1,55 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import CustomCursor from '../components/ui/CustomCursor.astro';
+---
+
+<BaseLayout
+  title="Página no encontrada · Adrián Esquivel"
+  description="Lo siento, la página que buscas no existe. Vuelve al inicio o explora mis proyectos y experiencia."
+>
+  <CustomCursor />
+  <Header />
+
+  <main class="min-h-screen flex items-center bg-neutral-950">
+    <section class="container-custom py-24 md:py-32">
+      <div
+        class="max-w-2xl mx-auto text-center space-y-8"
+        data-section-reveal
+      >
+        <p class="text-sm font-medium text-accent-400 tracking-[0.25em] uppercase">
+          Error 404
+        </p>
+
+        <h1 class="heading-1 gradient-text">
+          Esta página no existe
+        </h1>
+
+        <p class="text-body-lg text-neutral-300">
+          Puede que el enlace esté roto o que la página haya cambiado de sitio.
+          Mientras tanto, puedes volver al inicio o visitar mis proyectos.
+        </p>
+
+        <div class="flex flex-wrap justify-center gap-4 pt-4">
+          <a
+            href="/"
+            class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary-500 text-neutral-50 text-sm md:text-base font-medium shadow-lg shadow-primary-900/40 hover:bg-primary-400 transition-colors duration-300"
+          >
+            Volver al inicio
+          </a>
+
+          <a
+            href="/#projects"
+            class="inline-flex items-center justify-center px-6 py-3 rounded-full border border-neutral-700 text-sm md:text-base font-medium text-neutral-100 hover:bg-neutral-800 hover:border-neutral-600 transition-colors duration-300"
+          >
+            Ver proyectos
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>
+

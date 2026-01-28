@@ -1,0 +1,117 @@
+---
+import { projects, allTags } from '../../data/projects';
+import ProjectCard from '../ui/ProjectCard.astro';
+import TechCarousel from '../ui/TechCarousel.astro';
+
+// Tecnologías más relevantes y conocidas de los proyectos para el carrusel
+const featuredTechnologies = [
+  'Java',
+  'Spring Boot',
+  'JavaScript',
+  'TypeScript',
+  'React',
+  'Astro',
+  'Node.js',
+  'Express',
+  'MySQL',
+  'Tailwind CSS',
+  'Bootstrap',
+  'Thymeleaf',
+  'Git',
+  'GitHub',
+  'HTML5',
+  'CSS3',
+];
+---
+
+<section id="projects" class="section bg-white dark:bg-neutral-900 transition-colors duration-300" data-section-reveal>
+  <div class="container-custom">
+    <!-- Header -->
+    <div class="text-center mb-12 md:mb-16">
+      <h2 
+        class="heading-2 mb-4" 
+        data-reveal-item
+        data-text-split
+      >
+        Proyectos
+      </h2>
+      <p 
+        class="text-body max-w-2xl mx-auto" 
+        data-reveal-item
+      >
+        Una selección de proyectos que demuestran mis habilidades y experiencia en desarrollo web.
+      </p>
+    </div>
+
+    <!-- Carrusel de tecnologías -->
+    <div class="mb-8 md:mb-12" data-reveal-item>
+      <TechCarousel technologies={featuredTechnologies} />
+    </div>
+
+    <!-- Grid de proyectos -->
+    <div
+      id="projects-grid"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+      data-stagger-container
+    >
+      {projects.map((project, index) => (
+        <div
+          class="project-item w-full"
+          data-tags={project.tags.join(',')}
+          data-stagger-item
+          data-project-id={project.id}
+          style="display: block; visibility: visible;"
+        >
+          <ProjectCard project={project} />
+        </div>
+      ))}
+    </div>
+
+    <!-- Mensaje cuando no hay resultados -->
+    <div
+      id="no-results"
+      class="hidden text-center py-12"
+    >
+      <p class="text-neutral-500 dark:text-neutral-400 text-lg">
+        No se encontraron proyectos con ese filtro.
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Asegurar que los elementos tengan display y visibility correctos
+  // pero NO forzar opacity para permitir que GSAP anime
+  function ensureProjectsStructure() {
+    const projectItems = document.querySelectorAll('.project-item');
+    projectItems.forEach((item) => {
+      const htmlItem = item;
+      // Solo asegurar estructura, no opacity
+      htmlItem.style.display = 'block';
+      htmlItem.style.visibility = 'visible';
+      htmlItem.style.height = 'auto';
+      htmlItem.style.minHeight = 'auto';
+    });
+  }
+
+  // Ejecutar después de que el DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureProjectsStructure);
+  } else {
+    ensureProjectsStructure();
+  }
+
+  // Fallback de seguridad: solo si después de 3 segundos no hay animación
+  setTimeout(() => {
+    const projectItems = document.querySelectorAll('.project-item');
+    projectItems.forEach((item) => {
+      const htmlItem = item;
+      // Solo forzar si realmente no se ha animado
+      const computedStyle = window.getComputedStyle(htmlItem);
+      if (computedStyle.opacity === '0' || parseFloat(computedStyle.opacity) < 0.1) {
+        htmlItem.style.opacity = '1';
+        htmlItem.style.transform = '';
+      }
+    });
+  }, 3000);
+</script>

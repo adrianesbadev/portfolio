@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import Hero from '../components/sections/Hero.astro';
+import Projects from '../components/sections/Projects.astro';
+import About from '../components/sections/About.astro';
+import Experience from '../components/sections/Experience.astro';
+import Contact from '../components/sections/Contact.astro';
+import CustomCursor from '../components/ui/CustomCursor.astro';
+---
+
+<BaseLayout
+  title="Adrián Esquivel - Desarrollador / Estudiante CFGS DAM"
+  description="Portfolio personal de Adrián Esquivel Barrera. Desarrollador apasionado por crear soluciones web modernas con Java, Spring Boot, JavaScript y más."
+>
+  <CustomCursor />
+  <Header />
+  <main>
+    <Hero />
+    <Projects />
+    <About />
+    <Experience />
+    <Contact />
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  import { initPortfolioAnimations } from '../utils/animations';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  // Inicializar animaciones avanzadas con GSAP
+  const animations = initPortfolioAnimations();
+
+  // Refrescar ScrollTrigger después de que todo esté cargado
+  setTimeout(() => {
+    ScrollTrigger.refresh();
+  }, 100);
+
+  // Header con efecto de scroll mejorado
+  let lastScroll = 0;
+  const header = document.getElementById('header');
+  
+  const handleScroll = () => {
+    const currentScroll = window.pageYOffset;
+    
+    if (header) {
+      if (currentScroll > 100) {
+        header.classList.add('shadow-md', 'bg-white/95', 'dark:bg-neutral-900/95');
+      } else {
+        header.classList.remove('shadow-md', 'bg-white/95');
+      }
+    }
+    
+    lastScroll = currentScroll;
+  };
+
+  // Throttle para mejor rendimiento
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        handleScroll();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+</script>

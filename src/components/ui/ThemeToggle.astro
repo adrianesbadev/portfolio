@@ -1,0 +1,139 @@
+---
+// Componente de toggle para modo oscuro/claro
+// Posición fija abajo a la izquierda con animaciones suaves
+---
+
+<button
+  id="theme-toggle"
+  type="button"
+  role="switch"
+  aria-label="Alternar entre modo claro y oscuro"
+  class="fixed bottom-4 left-4 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 shadow-lg hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-900 group"
+  aria-checked="false"
+>
+  <!-- Icono Sol (modo claro) -->
+  <svg
+    class="absolute w-6 h-6 text-yellow-500 dark:text-transparent transition-all duration-300 dark:scale-0 dark:opacity-0"
+    fill="currentColor"
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+  >
+    <path
+      fill-rule="evenodd"
+      d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+      clip-rule="evenodd"
+    />
+  </svg>
+
+  <!-- Icono Luna (modo oscuro) -->
+  <svg
+    class="absolute w-6 h-6 text-primary-400 dark:text-primary-300 transition-all duration-300 scale-0 opacity-0 dark:scale-100 dark:opacity-100"
+    fill="currentColor"
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+  >
+    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+  </svg>
+</button>
+
+<script>
+  (function initThemeToggle() {
+    const toggle = document.getElementById('theme-toggle');
+    if (!toggle) return;
+
+    // Obtener tema actual
+    const getCurrentTheme = () => {
+      return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    };
+
+    // Actualizar aria-checked
+    const updateAriaChecked = () => {
+      toggle.setAttribute('aria-checked', getCurrentTheme() === 'dark' ? 'true' : 'false');
+    };
+
+    // Inicializar aria-checked
+    updateAriaChecked();
+
+    // Función para cambiar tema
+    const toggleTheme = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      
+      // Respetar prefers-reduced-motion
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const transitionDuration = prefersReducedMotion ? '0s' : '0.3s';
+      
+      // Aplicar transición suave
+      document.documentElement.style.transition = `background-color ${transitionDuration} ease, color ${transitionDuration} ease`;
+      document.body.style.transition = `background-color ${transitionDuration} ease, color ${transitionDuration} ease`;
+
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+
+      updateAriaChecked();
+
+      // Remover transición después de completarse para mejor rendimiento
+      setTimeout(() => {
+        document.documentElement.style.transition = '';
+        document.body.style.transition = '';
+      }, prefersReducedMotion ? 0 : 300);
+    };
+
+    // Event listeners
+    toggle.addEventListener('click', toggleTheme);
+    
+    // Soporte para teclado (Enter y Space)
+    toggle.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleTheme();
+      }
+    });
+
+    // Escuchar cambios en prefers-color-scheme (solo si no hay preferencia guardada)
+    if (!localStorage.getItem('theme')) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (e.matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+        updateAriaChecked();
+      });
+    }
+  })();
+</script>
+
+<style>
+  /* Animaciones suaves para el toggle */
+  @media (prefers-reduced-motion: no-preference) {
+    #theme-toggle svg {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #theme-toggle:hover {
+      transform: scale(1.05);
+    }
+
+    #theme-toggle:active {
+      transform: scale(0.95);
+    }
+  }
+
+  /* Respetar prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    #theme-toggle,
+    #theme-toggle svg {
+      transition: none !important;
+    }
+
+    #theme-toggle:hover {
+      transform: none;
+    }
+  }
+</style>
