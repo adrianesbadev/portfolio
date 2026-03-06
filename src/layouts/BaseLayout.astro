@@ -1,39 +1,155 @@
 ---
 import '../styles/global.css';
-import { personalInfo } from '../data/personal';
+import { getPersonalInfo } from '../data/personal';
+import { getLocaleFromPathname, normalizeLocale, type Locale } from '../i18n/config';
 
 interface Props {
   title?: string;
   description?: string;
   image?: string;
   type?: 'website' | 'article';
+  locale?: Locale;
 }
 
 const {
-  title = `${personalInfo.name} - ${personalInfo.role}`,
-  description = personalInfo.bio,
+  title,
+  description,
   image = '/og.png',
   type = 'website',
-} = Astro.props;
+  locale,
+} = Astro.props as Props;
 
+const resolvedLocale = normalizeLocale(locale ?? getLocaleFromPathname(Astro.url.pathname));
+const localizedPersonalInfo = getPersonalInfo(resolvedLocale);
+const resolvedTitle = title ?? `${localizedPersonalInfo.name} - ${localizedPersonalInfo.role}`;
+const resolvedDescription = description ?? localizedPersonalInfo.bio;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const fullImageURL = new URL(image, Astro.site);
+const ogLocale = resolvedLocale === 'en' ? 'en_US' : 'es_ES';
+const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={resolvedLocale} data-base-url={baseUrl}>
   <head>
-    <!-- Script anti-flash: aplicar modo oscuro por defecto -->
-    <script is:inline>
-      (function() {
-        // Siempre aplicar modo oscuro
-        document.documentElement.classList.add('dark');
-      })();
-    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Favicons completos -->
+    <meta name="theme-color" content="#f8fafc" />
+
+    <script is:inline>
+      (() => {
+        const THEME_KEY = 'portfolio-theme';
+        const LANG_KEY = 'portfolio-lang';
+        const VALID_THEMES = new Set(['light', 'dark', 'system']);
+        const VALID_LANGS = new Set(['es', 'en']);
+        const root = document.documentElement;
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+        const baseUrl = root.getAttribute('data-base-url') || '/';
+        const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+
+        const safeGet = (key) => {
+          try {
+            return window.localStorage.getItem(key);
+          } catch {
+            return null;
+          }
+        };
+
+        const safeSet = (key, value) => {
+          try {
+            window.localStorage.setItem(key, value);
+          } catch {
+            // no-op in private contexts where storage might be blocked
+          }
+        };
+
+        const getResolvedTheme = (preference) => {
+          if (preference === 'dark') return 'dark';
+          if (preference === 'light') return 'light';
+          return systemTheme.matches ? 'dark' : 'light';
+        };
+
+        const updateThemeColorMeta = (resolvedTheme) => {
+          const themeMeta = document.querySelector('meta[name="theme-color"]');
+          if (!themeMeta) return;
+          themeMeta.setAttribute('content', resolvedTheme === 'dark' ? '#0c0f15' : '#f8fafc');
+        };
+
+        const applyThemePreference = (preference) => {
+          const normalizedPreference = VALID_THEMES.has(preference) ? preference : 'system';
+          const resolvedTheme = getResolvedTheme(normalizedPreference);
+
+          root.dataset.themePreference = normalizedPreference;
+          root.dataset.themeResolved = resolvedTheme;
+          root.classList.toggle('dark', resolvedTheme === 'dark');
+          root.style.colorScheme = resolvedTheme;
+
+          updateThemeColorMeta(resolvedTheme);
+        };
+
+        const storedTheme = safeGet(THEME_KEY);
+        const themePreference = VALID_THEMES.has(storedTheme) ? storedTheme : 'system';
+        safeSet(THEME_KEY, themePreference);
+        applyThemePreference(themePreference);
+
+        const currentPathname = window.location.pathname;
+        const englishPathPrefix = `${normalizedBaseUrl}en/`;
+        const isEnglishPath = currentPathname === `${normalizedBaseUrl}en` || currentPathname.startsWith(englishPathPrefix);
+        const pathLang = isEnglishPath ? 'en' : 'es';
+        const storedLang = safeGet(LANG_KEY);
+        const normalizedStoredLang = VALID_LANGS.has(storedLang) ? storedLang : null;
+        const activeLang = pathLang || normalizedStoredLang || 'es';
+
+        root.dataset.locale = activeLang;
+        root.lang = activeLang;
+        safeSet(LANG_KEY, activeLang);
+
+        const dispatchPreferenceUpdate = () => {
+          document.dispatchEvent(new Event('portfolio:preferences-updated'));
+        };
+
+        const applySystemThemeIfNeeded = () => {
+          if ((root.dataset.themePreference || 'system') !== 'system') return;
+          applyThemePreference('system');
+          dispatchPreferenceUpdate();
+        };
+
+        if (typeof systemTheme.addEventListener === 'function') {
+          systemTheme.addEventListener('change', applySystemThemeIfNeeded);
+        } else if (typeof systemTheme.addListener === 'function') {
+          systemTheme.addListener(applySystemThemeIfNeeded);
+        }
+
+        window.__portfolioPreferences = {
+          getThemePreference() {
+            return root.dataset.themePreference || 'system';
+          },
+          setThemePreference(nextPreference) {
+            const preference = VALID_THEMES.has(nextPreference) ? nextPreference : 'system';
+            safeSet(THEME_KEY, preference);
+            applyThemePreference(preference);
+            dispatchPreferenceUpdate();
+          },
+          getLocale() {
+            return root.dataset.locale || 'es';
+          },
+          setLocale(nextLocale) {
+            const locale = VALID_LANGS.has(nextLocale) ? nextLocale : 'es';
+            safeSet(LANG_KEY, locale);
+            const targetPath = locale === 'en' ? `${normalizedBaseUrl}en/` : normalizedBaseUrl;
+            const nextUrl = new URL(window.location.href);
+            nextUrl.pathname = targetPath;
+            nextUrl.search = '';
+            if (nextUrl.pathname === window.location.pathname && nextUrl.hash === window.location.hash) {
+              dispatchPreferenceUpdate();
+              return;
+            }
+            window.location.assign(nextUrl.toString());
+          },
+        };
+      })();
+    </script>
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -41,71 +157,58 @@ const fullImageURL = new URL(image, Astro.site);
     <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    
+
     <meta name="generator" content={Astro.generator} />
-    
-    <!-- Primary Meta Tags -->
-    <title>{title}</title>
-    <meta name="title" content={title} />
-    <meta name="description" content={description} />
-    <meta name="author" content={personalInfo.fullName} />
-    
-    <!-- Canonical URL -->
+    <title>{resolvedTitle}</title>
+    <meta name="title" content={resolvedTitle} />
+    <meta name="description" content={resolvedDescription} />
+    <meta name="author" content={localizedPersonalInfo.fullName} />
     <link rel="canonical" href={canonicalURL} />
-    
-    <!-- Open Graph / Facebook -->
+
     <meta property="og:type" content={type} />
     <meta property="og:url" content={canonicalURL} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={resolvedTitle} />
+    <meta property="og:description" content={resolvedDescription} />
     <meta property="og:image" content={fullImageURL} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content="es_ES" />
-    
-    <!-- Twitter -->
+    <meta property="og:locale" content={ogLocale} />
+
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonicalURL} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
+    <meta property="twitter:title" content={resolvedTitle} />
+    <meta property="twitter:description" content={resolvedDescription} />
     <meta property="twitter:image" content={fullImageURL} />
-    
-    <!-- Additional Meta Tags -->
+
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#a855f7" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
-    
-    <!-- Structured Data (JSON-LD) -->
-    <script type="application/ld+json" set:html={JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "Person",
-      "name": personalInfo.fullName,
-      "jobTitle": personalInfo.role,
-      "url": Astro.site,
-      "sameAs": [
-        personalInfo.social.github,
-        personalInfo.social.linkedin,
-      ],
-      "knowsAbout": ["Web Development", "Software Development", "Java", "Spring Boot", "JavaScript"],
-      "address": {
-        "@type": "PostalAddress",
-        "addressCountry": "ES"
-      }
-    })} />
+
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: localizedPersonalInfo.fullName,
+        jobTitle: localizedPersonalInfo.role,
+        url: Astro.site,
+        sameAs: [localizedPersonalInfo.social.github, localizedPersonalInfo.social.linkedin],
+        knowsAbout: ['Web Development', 'Software Development', 'Java', 'Spring Boot', 'JavaScript'],
+        address: {
+          '@type': 'PostalAddress',
+          addressCountry: 'ES',
+        },
+      })}
+    />
   </head>
   <body>
     <slot />
 
-    <!-- Web Vitals: métricas de rendimiento (LCP, CLS, INP, FCP, TTFB) -->
     <script>
       import { onCLS, onLCP, onINP, onFCP, onTTFB } from 'web-vitals';
 
       function sendToAnalytics(metric) {
-        // En desarrollo: log en consola. En producción puedes enviar a Google Analytics, etc.
         if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') {
           console.log('[Web Vitals]', metric.name, metric.value, metric);
         }
-        // Ejemplo para más adelante: gtag('event', metric.name, { value: metric.value, ... });
       }
 
       onCLS(sendToAnalytics);
@@ -115,15 +218,12 @@ const fullImageURL = new URL(image, Astro.site);
       onTTFB(sendToAnalytics);
     </script>
 
-    <!-- Error tracking básico: captura errores globales (opcional: conectar Sentry después) -->
     <script is:inline>
       window.addEventListener('error', function (e) {
         console.error('[Error]', e.message, e.filename, e.lineno);
-        // Opcional: Sentry.captureException(e.error);
       });
       window.addEventListener('unhandledrejection', function (e) {
         console.error('[Unhandled Rejection]', e.reason);
-        // Opcional: Sentry.captureException(e.reason);
       });
     </script>
   </body>

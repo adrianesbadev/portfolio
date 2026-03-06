@@ -1,100 +1,84 @@
 ---
-import { personalInfo } from '../../data/personal';
+import { getPersonalInfo } from '../../data/personal';
+import { getProjects } from '../../data/projects';
+import { getExperiences } from '../../data/experience';
+import type { Locale } from '../../i18n/config';
+import { getTranslations } from '../../i18n/translations';
 import Button from '../ui/Button.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props as Props;
+
+const personalInfo = getPersonalInfo(locale);
+const projects = getProjects(locale);
+const experiences = getExperiences(locale);
+const t = getTranslations(locale);
+
+const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
+
+const profilePhotoPath = `${baseUrl}profile/adrian-esquivel.jpg`;
+const fallbackPhotoPath = `${baseUrl}profile/avatar-placeholder.svg`;
+
+const quickStats = [
+  { label: t.hero.statProjects, value: String(projects.length).padStart(2, '0') },
+  { label: t.hero.statExperience, value: String(experiences.length).padStart(2, '0') },
+  { label: t.hero.statResponse, value: personalInfo.responseTime },
+];
 ---
 
-<section
-  id="home"
-  class="min-h-screen flex items-center justify-center pt-20 md:pt-24 bg-gradient-to-b from-white dark:from-neutral-900 to-neutral-50 dark:to-neutral-950 relative overflow-hidden transition-colors duration-300"
->
-  <!-- Elementos decorativos con parallax mejorado -->
-  <div 
-    class="absolute inset-0 opacity-10 pointer-events-none overflow-hidden"
-  >
-    <div 
-      class="absolute top-20 left-10 w-72 h-72 bg-primary-500 rounded-full blur-3xl animate-pulse"
-      data-parallax="0.4"
-      data-parallax-direction="y"
-    ></div>
-    <div 
-      class="absolute bottom-20 right-10 w-96 h-96 bg-accent-400 rounded-full blur-3xl animate-pulse"
-      data-parallax="0.3"
-      data-parallax-direction="y"
-      style="animation-delay: 1s;"
-    ></div>
-    <div 
-      class="absolute top-1/2 left-1/2 w-64 h-64 bg-primary-300 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
-      data-parallax="0.2"
-      data-parallax-direction="y"
-      style="animation-delay: 0.5s;"
-    ></div>
-  </div>
+<section id="home" class="section pt-32 md:pt-36 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300" data-section>
   <div class="container-custom">
-    <div class="max-w-4xl mx-auto text-center">
-      <!-- Badge de disponibilidad -->
-      {personalInfo.availableForWork && (
-        <div class="hero-badge inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-50 to-accent-50 text-primary-700 rounded-full text-sm font-medium mb-8 border border-primary-200/50 shadow-sm">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
-          </span>
-          Disponible para trabajar
+    <div class="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)] gap-10 items-start">
+      <div>
+        <p class="kicker mb-4" data-reveal-item>{t.hero.kicker}</p>
+
+        <h1 class="heading-1 max-w-4xl mb-5" data-reveal-item>{personalInfo.headline}</h1>
+
+        <p class="text-body-lg mb-8" data-reveal-item>{personalInfo.subheadline}</p>
+
+        <div class="grid sm:grid-cols-3 gap-3 mb-8" data-reveal-item>
+          {quickStats.map((item) => (
+            <div class="panel-muted">
+              <p class="text-xs uppercase tracking-[0.08em] text-neutral-500 dark:text-neutral-400">{item.label}</p>
+              <p class="text-lg font-semibold text-neutral-950 dark:text-neutral-100 mt-1">{item.value}</p>
+            </div>
+          ))}
         </div>
-      )}
 
-      <!-- Nombre principal con animación typewriter -->
-      <h1 
-        class="hero-title heading-1 mb-6" 
-        id="hero-name"
-        data-name={personalInfo.fullName || personalInfo.name}
-      >
-        <span class="gradient-text typewriter-text"></span>
-      </h1>
-
-      <!-- Rol -->
-      <p class="hero-role text-body-lg text-neutral-700 dark:text-neutral-300 mb-8 max-w-2xl mx-auto">
-        {personalInfo.role}
-      </p>
-
-      <!-- Descripción breve -->
-      <p class="hero-bio text-body mb-12 max-w-2xl mx-auto">
-        {personalInfo.bio}
-      </p>
-
-      <!-- CTAs -->
-      <div class="hero-cta flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Button href="#projects" variant="primary" size="lg">
-          Ver Proyectos
-        </Button>
-        <Button href="#contact" variant="outline" size="lg">
-          Contactar
-        </Button>
+        <div class="flex flex-col sm:flex-row items-start gap-3" data-reveal-item>
+          <Button href="#projects" variant="primary" size="lg">{t.hero.primaryCta}</Button>
+          <Button href="#contact" variant="outline" size="lg">{t.hero.secondaryCta}</Button>
+        </div>
       </div>
 
-      <!-- Scroll indicator (opcional) -->
-      <div class="hero-scroll mt-16">
-        <a
-          href="#projects"
-          class="inline-flex flex-col items-center gap-2 text-neutral-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200 animate-bounce"
-          aria-label="Scroll hacia abajo"
-        >
-          <span class="text-xs font-medium">Explorar</span>
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 14l-7 7m0 0l-7-7m7 7V3"
-            />
-          </svg>
-        </a>
-      </div>
+      <aside data-reveal-item>
+        <div class="panel overflow-hidden">
+          <img
+            src={profilePhotoPath}
+            alt={`Portrait of ${personalInfo.fullName}`}
+            class="w-full aspect-[4/5] object-cover"
+            loading="eager"
+            onerror={`this.onerror=null;this.src='${fallbackPhotoPath}'`}
+          />
+
+          <div class="p-5 border-t border-neutral-200 dark:border-neutral-800">
+            <p class="font-semibold text-neutral-950 dark:text-neutral-100">{personalInfo.fullName}</p>
+            <p class="text-sm text-primary-700 dark:text-primary-300 mt-1">{personalInfo.role}</p>
+            <p class="text-sm text-neutral-600 dark:text-neutral-400 mt-3">{personalInfo.location}</p>
+
+            <ul class="mt-4 space-y-2">
+              {t.hero.focusItems.map((item) => (
+                <li class="text-sm text-neutral-700 dark:text-neutral-300">{item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 </section>

@@ -1,0 +1,179 @@
+---
+import type { Locale } from '../../i18n/config';
+import { getTranslations } from '../../i18n/translations';
+
+interface Props {
+  locale: Locale;
+  mobile?: boolean;
+}
+
+const { locale, mobile = false } = Astro.props as Props;
+const t = getTranslations(locale);
+---
+
+<div class={`preferences-shell ${mobile ? 'preferences-shell-mobile' : ''}`} data-preferences>
+  <div class="preferences-group" role="group" aria-label={t.controls.theme.label}>
+    <button
+      type="button"
+      class="preferences-button"
+      data-theme-option="light"
+      aria-label={t.controls.theme.lightAria}
+      title={t.controls.theme.light}
+      aria-pressed="false"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 2.75v1.5M10 15.75v1.5M4.25 10h-1.5M17.25 10h-1.5M5.72 5.72L4.66 4.66M15.34 15.34l-1.06-1.06M5.72 14.28l-1.06 1.06M15.34 4.66l-1.06 1.06" stroke="currentColor" stroke-linecap="round" stroke-width="1.4"></path>
+        <circle cx="10" cy="10" r="3.2" stroke="currentColor" stroke-width="1.4"></circle>
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="preferences-button"
+      data-theme-option="dark"
+      aria-label={t.controls.theme.darkAria}
+      title={t.controls.theme.dark}
+      aria-pressed="false"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M11.9 2.9a6.9 6.9 0 1 0 5.2 11.4A7.2 7.2 0 0 1 11.9 2.9Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="preferences-button preferences-button-system"
+      data-theme-option="system"
+      aria-label={t.controls.theme.systemAria}
+      title={t.controls.theme.system}
+      aria-pressed="false"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <rect x="3" y="4" width="14" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"></rect>
+        <path d="M8 16h4M10 13v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class="preferences-group" role="group" aria-label={t.controls.language.label}>
+    <button
+      type="button"
+      class="preferences-button preferences-language"
+      data-locale-option="es"
+      aria-label={t.controls.language.spanishAria}
+      title={t.controls.language.spanish}
+      aria-pressed="false"
+    >
+      <span class="preferences-flag" aria-hidden="true">🇪🇸</span>
+      <span>{t.controls.language.codeEs}</span>
+    </button>
+
+    <button
+      type="button"
+      class="preferences-button preferences-language"
+      data-locale-option="en"
+      aria-label={t.controls.language.englishAria}
+      title={t.controls.language.english}
+      aria-pressed="false"
+    >
+      <span class="preferences-flag" aria-hidden="true">🇬🇧</span>
+      <span>{t.controls.language.codeEn}</span>
+    </button>
+  </div>
+</div>
+
+<script define:vars={{ locale }}>
+  (() => {
+    if (window.__portfolioPreferenceUiReady) {
+      return;
+    }
+    window.__portfolioPreferenceUiReady = true;
+
+    const root = document.documentElement;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const getThemePreference = () => {
+      if (window.__portfolioPreferences?.getThemePreference) {
+        return window.__portfolioPreferences.getThemePreference();
+      }
+      return root.dataset.themePreference || 'system';
+    };
+
+    const getLocalePreference = () => {
+      if (window.__portfolioPreferences?.getLocale) {
+        return window.__portfolioPreferences.getLocale();
+      }
+      return root.dataset.locale || locale;
+    };
+
+    const syncControls = () => {
+      const currentTheme = getThemePreference();
+      const currentLocale = getLocalePreference();
+
+      document.querySelectorAll('[data-theme-option]').forEach((button) => {
+        const isActive = button.getAttribute('data-theme-option') === currentTheme;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+
+      document.querySelectorAll('[data-locale-option]').forEach((button) => {
+        const isActive = button.getAttribute('data-locale-option') === currentLocale;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+    };
+
+    const animateThemeTransition = () => {
+      if (reducedMotion.matches) {
+        return;
+      }
+
+      root.classList.add('theme-transitioning');
+      window.setTimeout(() => {
+        root.classList.remove('theme-transitioning');
+      }, 280);
+    };
+
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      const themeButton = target.closest('[data-theme-option]');
+      if (themeButton instanceof HTMLButtonElement) {
+        const value = themeButton.getAttribute('data-theme-option') || 'system';
+        if (value === getThemePreference()) {
+          return;
+        }
+        animateThemeTransition();
+
+        if (window.__portfolioPreferences?.setThemePreference) {
+          window.__portfolioPreferences.setThemePreference(value);
+        }
+
+        syncControls();
+        return;
+      }
+
+      const localeButton = target.closest('[data-locale-option]');
+      if (localeButton instanceof HTMLButtonElement) {
+        const value = localeButton.getAttribute('data-locale-option');
+        if (!value) {
+          return;
+        }
+        if (value === getLocalePreference()) {
+          return;
+        }
+
+        if (window.__portfolioPreferences?.setLocale) {
+          window.__portfolioPreferences.setLocale(value);
+        }
+      }
+    });
+
+    syncControls();
+    document.addEventListener('portfolio:preferences-updated', syncControls);
+    window.addEventListener('pageshow', syncControls);
+  })();
+</script>

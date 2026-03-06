@@ -1,134 +1,60 @@
 ---
-import { experiences } from '../../data/experience';
+import { getExperiences } from '../../data/experience';
+import type { Locale } from '../../i18n/config';
+import { getTranslations } from '../../i18n/translations';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props as Props;
+const experiences = getExperiences(locale);
+const t = getTranslations(locale);
 ---
 
-<section id="experience" class="section bg-white dark:bg-neutral-900 transition-colors duration-300" data-section-reveal>
+<section id="experience" class="section bg-white dark:bg-neutral-900 transition-colors duration-300" data-section>
   <div class="container-custom">
-    <!-- Header -->
-    <div class="text-center mb-12 md:mb-16">
-      <h2 
-        class="heading-2 mb-4" 
-        data-reveal-item
-        data-text-split
-      >
-        Experiencia
-      </h2>
-      <p 
-        class="text-body max-w-2xl mx-auto" 
-        data-reveal-item
-      >
-        Mi trayectoria profesional y los proyectos en los que he trabajado.
-      </p>
+    <div class="max-w-3xl mb-10 md:mb-12" data-reveal-item>
+      <p class="kicker mb-3">{t.experience.kicker}</p>
+      <h2 class="heading-2 mb-4">{t.experience.title}</h2>
+      <p class="text-body">{t.experience.intro}</p>
     </div>
 
-    {experiences && experiences.length > 0 ? (
-      <!-- Timeline de experiencia -->
-      <div class="max-w-4xl mx-auto" data-stagger-container>
-        <div class="space-y-8">
-          {experiences.map((exp, index) => (
-            <div 
-              class="relative pl-8 md:pl-12 pb-8 border-l-2 border-primary-200 dark:border-primary-800 last:border-l-0 last:pb-0 experience-item"
-              data-stagger-item
-              style="opacity: 1; visibility: visible;"
-            >
-              <!-- Punto del timeline -->
-              <div class={`absolute -left-2 top-0 w-4 h-4 rounded-full transition-all duration-300 ${
-                exp.current 
-                  ? 'bg-gradient-to-r from-primary-500 to-accent-500 ring-4 ring-primary-200 dark:ring-primary-800 animate-pulse' 
-                  : 'bg-primary-600 dark:bg-primary-500'
-              }`}></div>
-
-              <!-- Contenido -->
-              <div class="space-y-2">
-                <!-- Título y fechas -->
-                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
-                  <div>
-                    <h3 class="text-xl md:text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
-                      {exp.position}
-                    </h3>
-                    <p class="text-lg font-medium text-primary-600 dark:text-primary-400">
-                      {exp.company}
-                    </p>
-                  </div>
-                  <div class="text-right md:text-left">
-                    <p class="text-sm font-medium text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-                      {exp.startDate} - {exp.endDate || 'Presente'}
-                    </p>
-                    {exp.location && (
-                      <p class="text-sm text-neutral-500 dark:text-neutral-500 mt-1">
-                        {exp.location}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <!-- Descripción -->
-                <p class="text-neutral-600 dark:text-neutral-300 mt-3 leading-relaxed">
-                  {exp.description}
-                </p>
-
-                <!-- Tecnologías -->
-                {exp.technologies && exp.technologies.length > 0 && (
-                  <div class="flex flex-wrap gap-2 mt-4">
-                    {exp.technologies.map((tech) => (
-                      <span class="px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-xs font-medium border border-primary-100 dark:border-primary-800">
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+    <div class="space-y-6" data-stagger-container>
+      {experiences.map((exp) => (
+        <article class="panel p-5 md:p-6" data-stagger-item>
+          <header class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-xl md:text-2xl font-semibold text-neutral-950 dark:text-neutral-100">{exp.position}</h3>
+              <p class="text-primary-700 dark:text-primary-300 font-medium mt-1">{exp.company}</p>
             </div>
-          ))}
-        </div>
-      </div>
-    ) : (
-      <!-- Mensaje si no hay experiencias -->
-      <div class="text-center py-12" data-reveal-item>
-        <p class="text-neutral-500 dark:text-neutral-400 text-lg">
-          Próximamente se añadirá información de experiencia profesional.
-        </p>
-      </div>
-    )}
+
+            <div class="text-sm text-neutral-600 dark:text-neutral-400 md:text-right">
+              <p>{exp.startDate} - {exp.endDate || t.experience.present}</p>
+              {exp.location && <p>{exp.location}</p>}
+            </div>
+          </header>
+
+          <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed mb-4">{exp.summary}</p>
+
+          <ul class="case-list space-y-2 text-sm text-neutral-700 dark:text-neutral-300 mb-4">
+            {exp.highlights.map((item) => (
+              <li>{item}</li>
+            ))}
+          </ul>
+
+          <div class="rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50/60 dark:bg-primary-900/20 p-4 mb-4">
+            <p class="text-xs uppercase tracking-[0.08em] text-primary-700 dark:text-primary-300 mb-1">{t.experience.impact}</p>
+            <p class="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed">{exp.impact}</p>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            {exp.technologies.map((tech) => (
+              <span class="tag-subtle">{tech}</span>
+            ))}
+          </div>
+        </article>
+      ))}
+    </div>
   </div>
 </section>
-
-<script>
-  // Asegurar que las experiencias sean siempre visibles
-  function ensureExperiencesVisible() {
-    const experienceItems = document.querySelectorAll('.experience-item, #experience [data-stagger-item]');
-    
-    experienceItems.forEach((item) => {
-      const htmlItem = item as HTMLElement;
-      
-      // Forzar visibilidad inmediata
-      htmlItem.style.display = 'block';
-      htmlItem.style.visibility = 'visible';
-      htmlItem.style.opacity = '1';
-      htmlItem.style.transform = '';
-      
-      // Si GSAP está disponible, actualizar también
-      if (window.gsap) {
-        window.gsap.set(item, {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          rotation: 0,
-          clearProps: 'all',
-        });
-      }
-    });
-  }
-
-  // Ejecutar inmediatamente y después de delays
-  ensureExperiencesVisible();
-  
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureExperiencesVisible);
-  }
-  
-  setTimeout(ensureExperiencesVisible, 100);
-  setTimeout(ensureExperiencesVisible, 500);
-  setTimeout(ensureExperiencesVisible, 1000);
-  setTimeout(ensureExperiencesVisible, 2000);
-</script>

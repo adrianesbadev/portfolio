@@ -1,25 +1,34 @@
 ---
 import FormInput from '../ui/FormInput.astro';
 import Button from '../ui/Button.astro';
+import { getPersonalInfo } from '../../data/personal';
+import type { Locale } from '../../i18n/config';
+import { getTranslations } from '../../i18n/translations';
 
-// Configuración de EmailJS - usar variables de entorno
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props as Props;
+const personalInfo = getPersonalInfo(locale);
+const t = getTranslations(locale);
+
 const emailjsConfig = {
   publicKey: import.meta.env.PUBLIC_EMAILJS_PUBLIC_KEY || 'YOUR_PUBLIC_KEY',
   serviceId: import.meta.env.PUBLIC_EMAILJS_SERVICE_ID || 'YOUR_SERVICE_ID',
   templateId: import.meta.env.PUBLIC_EMAILJS_TEMPLATE_ID || 'YOUR_TEMPLATE_ID',
 };
+
+const contextLead = t.contact.contextLead.replace('{responseTime}', personalInfo.responseTime);
 ---
 
-<!-- Cargar EmailJS desde CDN -->
 <script>
-  // Cargar EmailJS desde CDN y esperar a que esté disponible
-  (function () {
+  (function loadEmailJS() {
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
     script.async = true;
     script.onload = function () {
       window.emailjsLoaded = true;
-      // Disparar evento personalizado
       window.dispatchEvent(new Event('emailjsReady'));
     };
     script.onerror = function () {
@@ -29,147 +38,107 @@ const emailjsConfig = {
   })();
 </script>
 
-<section id="contact" class="section bg-white dark:bg-neutral-900 transition-colors duration-300" data-section-reveal>
+<section id="contact" class="section bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300" data-section>
   <div class="container-custom">
-    <div class="max-w-2xl mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-12 md:mb-16">
-        <h2 
-          class="heading-2 mb-4" 
-          data-reveal-item
-          data-text-split
-        >
-          Contacto
-        </h2>
-        <p 
-          class="text-body max-w-xl mx-auto" 
-          data-reveal-item
-        >
-          ¿Tienes un proyecto en mente o quieres colaborar? Me encantaría escucharte.
-        </p>
-      </div>
+    <div class="max-w-3xl mb-10 md:mb-12" data-reveal-item>
+      <p class="kicker mb-3">{t.contact.kicker}</p>
+      <h2 class="heading-2 mb-4">{t.contact.title}</h2>
+      <p class="text-body">{t.contact.intro}</p>
+    </div>
 
-      <!-- Formulario -->
-      <form
-        id="contact-form"
-        class="space-y-6"
-        novalidate
-        data-reveal-item
-      >
+    <div class="grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-6 md:gap-8">
+      <aside class="panel h-fit p-5 md:p-6" data-reveal-item>
+        <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed mb-4">{contextLead}</p>
+
+        <ul class="case-list space-y-2 text-sm text-neutral-700 dark:text-neutral-300 mb-5">
+          {t.contact.collaborationModes.map((mode) => (
+            <li>{mode}</li>
+          ))}
+        </ul>
+
+        <div class="space-y-2 text-sm">
+          <p>
+            <span class="text-neutral-500 dark:text-neutral-400">{t.contact.emailLabel}:</span>
+            <a href={`mailto:${personalInfo.email}`} class="text-primary-700 dark:text-primary-300 hover:underline ml-2">
+              {personalInfo.email}
+            </a>
+          </p>
+          <p>
+            <span class="text-neutral-500 dark:text-neutral-400">{t.contact.linkedinLabel}:</span>
+            <a href={personalInfo.social.linkedin} target="_blank" rel="noopener noreferrer" class="text-primary-700 dark:text-primary-300 hover:underline ml-2">
+              {t.contact.linkedinCta}
+            </a>
+          </p>
+        </div>
+      </aside>
+
+      <form id="contact-form" class="panel p-5 md:p-6 space-y-5" novalidate data-reveal-item>
         <FormInput
           id="name"
           name="name"
           type="text"
-          label="Nombre"
+          label={t.contact.form.nameLabel}
           required
-          placeholder="Tu nombre"
+          placeholder={t.contact.form.namePlaceholder}
         />
 
         <FormInput
           id="email"
           name="email"
           type="email"
-          label="Email"
+          label={t.contact.form.emailLabel}
           required
-          placeholder="tu@email.com"
+          placeholder={t.contact.form.emailPlaceholder}
         />
 
         <FormInput
           id="message"
           name="message"
           type="textarea"
-          label="Mensaje"
+          label={t.contact.form.messageLabel}
           required
-          placeholder="Cuéntame sobre tu proyecto..."
+          placeholder={t.contact.form.messagePlaceholder}
           rows={6}
         />
 
-        <div class="pt-4">
-          <Button 
-            type="submit" 
-            variant="primary" 
-            size="lg" 
-            class="w-full sm:w-auto relative"
-            id="submit-btn"
-          >
-            <span id="submit-text">Enviar Mensaje</span>
+        <div class="pt-2">
+          <Button type="submit" variant="primary" size="md" class="w-full sm:w-auto relative" id="submit-btn">
+            <span id="submit-text">{t.contact.form.submitIdle}</span>
             <span id="submit-loader" class="hidden">
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-3 h-4 w-4 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
-              Enviando...
+              {t.contact.form.submitLoading}
             </span>
           </Button>
         </div>
 
-        <!-- Mensaje de éxito (oculto inicialmente) -->
         <div
           id="success-message"
-          class="hidden p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-300"
+          class="hidden p-3 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300"
           role="alert"
         >
-          <div class="flex items-center gap-2">
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            <span class="font-medium">¡Mensaje enviado con éxito!</span>
-          </div>
-          <p class="mt-2 text-sm">
-            Gracias por contactarme. Te responderé lo antes posible.
-          </p>
+          <p class="font-medium text-sm">{t.contact.form.success}</p>
         </div>
 
-        <!-- Mensaje de error (oculto inicialmente) -->
         <div
           id="error-message"
-          class="hidden p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-300"
+          class="hidden p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300"
           role="alert"
         >
-          <div class="flex items-center gap-2">
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-            <span class="font-medium">Error al enviar</span>
-          </div>
-          <p class="mt-2 text-sm" id="error-text">
-            Por favor, verifica que todos los campos estén correctos.
-          </p>
+          <p class="font-medium text-sm" id="error-text">{t.contact.form.errorDefault}</p>
         </div>
       </form>
     </div>
   </div>
 </section>
 
-<script define:vars={{ emailjsConfig }}>
-  // Configuración de EmailJS - inyectada desde el componente
+<script define:vars={{ emailjsConfig, contactEmail: personalInfo.email, copy: t.contact }}>
   const EMAILJS_CONFIG = emailjsConfig;
+  const CONTACT_EMAIL = contactEmail;
+  const CONTACT_COPY = copy;
 
-  // EmailJS se carga desde el CDN, disponible como window.emailjs
-
-  // Esperar a que el DOM esté completamente cargado
   function initContactForm() {
     const form = document.getElementById('contact-form');
     const submitBtn = document.getElementById('submit-btn');
@@ -179,216 +148,119 @@ const emailjsConfig = {
     const errorMessage = document.getElementById('error-message');
     const errorText = document.getElementById('error-text');
 
-    // Verificar qué elementos faltan (solo en desarrollo originalmente)
-    const missingElements = [];
-    if (!form) missingElements.push('form (contact-form)');
-    if (!submitBtn) missingElements.push('submitBtn (submit-btn)');
-    if (!submitText) missingElements.push('submitText (submit-text)');
-    if (!submitLoader) missingElements.push('submitLoader (submit-loader)');
-    if (!successMessage) missingElements.push('successMessage (success-message)');
-    if (!errorMessage) missingElements.push('errorMessage (error-message)');
-    if (!errorText) missingElements.push('errorText (error-text)');
-
-    // Verificar que todos los elementos existan
-    if (missingElements.length > 0) {
-      // En desarrollo antes mostrábamos detalles por consola;
-      // ahora simplemente reintentamos la inicialización.
-
-      // Intentar de nuevo después de un pequeño delay
-      setTimeout(() => {
-        initContactForm();
-      }, 500);
+    if (!form || !submitBtn || !submitText || !submitLoader || !successMessage || !errorMessage || !errorText) {
       return;
     }
 
-    // Antes se hacía logging en desarrollo; ya no es necesario aquí.
-
-    // Función para mostrar estado de carga
     function setLoading(isLoading) {
       if (isLoading) {
         submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
         submitText.classList.add('hidden');
         submitLoader.classList.remove('hidden');
       } else {
         submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
         submitText.classList.remove('hidden');
         submitLoader.classList.add('hidden');
       }
     }
 
-    // Función para mostrar mensaje de error
-    function showError(message) {
-      errorText.textContent = message;
-      errorMessage.classList.remove('hidden');
-      errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    // Función para mostrar mensaje de éxito
-    function showSuccess() {
-      successMessage.classList.remove('hidden');
-      successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    // Función para ocultar todos los mensajes
     function hideMessages() {
       successMessage.classList.add('hidden');
       errorMessage.classList.add('hidden');
     }
 
-    // Añadir event listener al formulario
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
+    function showError(message) {
+      errorText.textContent = message;
+      errorMessage.classList.remove('hidden');
+    }
+
+    async function waitForEmailJS() {
+      return new Promise((resolve, reject) => {
+        if (typeof window.emailjs !== 'undefined' && window.emailjsLoaded) {
+          resolve(window.emailjs);
+          return;
+        }
+
+        const timeout = setTimeout(() => reject(new Error(CONTACT_COPY.validation.emailJsLoadError)), 10000);
+
+        window.addEventListener(
+          'emailjsReady',
+          () => {
+            clearTimeout(timeout);
+            if (typeof window.emailjs !== 'undefined') {
+              resolve(window.emailjs);
+            } else {
+              reject(new Error(CONTACT_COPY.validation.emailJsUnavailable));
+            }
+          },
+          { once: true }
+        );
+      });
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
       hideMessages();
 
-      // Obtener valores del formulario
       const formData = new FormData(form);
       const name = String(formData.get('name') || '').trim();
       const email = String(formData.get('email') || '').trim();
       const message = String(formData.get('message') || '').trim();
 
-      // Validación básica
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      let isValid = true;
-      let errorMessages = [];
 
-      if (!name || name.length < 2) {
-        isValid = false;
-        errorMessages.push('El nombre debe tener al menos 2 caracteres');
-      }
-
-      if (!email || !emailRegex.test(email)) {
-        isValid = false;
-        errorMessages.push('Por favor, introduce un email válido');
-      }
-
-      if (!message || message.length < 10) {
-        isValid = false;
-        errorMessages.push('El mensaje debe tener al menos 10 caracteres');
-      }
-
-      if (!isValid) {
-        showError(errorMessages.join('. '));
+      if (name.length < 2) {
+        showError(CONTACT_COPY.validation.nameMin);
         return;
       }
 
-      // Verificar que EmailJS esté configurado
+      if (!emailRegex.test(email)) {
+        showError(CONTACT_COPY.validation.emailInvalid);
+        return;
+      }
+
+      if (message.length < 10) {
+        showError(CONTACT_COPY.validation.messageMin);
+        return;
+      }
+
       if (
         EMAILJS_CONFIG.publicKey === 'YOUR_PUBLIC_KEY' ||
         EMAILJS_CONFIG.serviceId === 'YOUR_SERVICE_ID' ||
         EMAILJS_CONFIG.templateId === 'YOUR_TEMPLATE_ID'
       ) {
-        showError('El formulario no está configurado correctamente. Por favor, configura EmailJS en el archivo de configuración.');
+        showError(CONTACT_COPY.validation.emailJsMissing);
         return;
-      }
-
-      // Esperar a que EmailJS esté cargado
-      async function waitForEmailJS() {
-        return new Promise((resolve, reject) => {
-          // Si ya está cargado, resolver inmediatamente
-          if (typeof window.emailjs !== 'undefined' && window.emailjsLoaded) {
-            resolve(window.emailjs);
-            return;
-          }
-
-          // Esperar al evento de carga
-          const timeout = setTimeout(() => {
-            reject(new Error('Timeout esperando EmailJS'));
-          }, 10000); // 10 segundos máximo
-
-          window.addEventListener('emailjsReady', () => {
-            clearTimeout(timeout);
-            if (typeof window.emailjs !== 'undefined') {
-              resolve(window.emailjs);
-            } else {
-              reject(new Error('EmailJS no está disponible'));
-            }
-          }, { once: true });
-
-          // También verificar periódicamente por si el evento no se dispara
-          const checkInterval = setInterval(() => {
-            if (typeof window.emailjs !== 'undefined' && window.emailjsLoaded) {
-              clearTimeout(timeout);
-              clearInterval(checkInterval);
-              resolve(window.emailjs);
-            }
-          }, 100);
-        });
       }
 
       try {
         setLoading(true);
 
-        // Esperar a que EmailJS esté disponible
         const emailjsLib = await waitForEmailJS();
-        
-        // Inicializar EmailJS
         emailjsLib.init(EMAILJS_CONFIG.publicKey);
 
-        // Preparar los parámetros del template
-        const templateParams = {
+        await emailjsLib.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
           from_name: name,
           from_email: email,
-          message: message,
-          to_name: 'Adrián', // Tu nombre
-        };
+          message,
+          to_name: 'Adrián',
+        });
 
-        // Enviar el email usando EmailJS
-        const response = await emailjsLib.send(
-          EMAILJS_CONFIG.serviceId,
-          EMAILJS_CONFIG.templateId,
-          templateParams
-        );
-
-        // Éxito
-        if (response.status === 200) {
-          showSuccess();
-          form.reset();
-          
-          // Resetear el botón después de un pequeño delay
-          setTimeout(() => {
-            setLoading(false);
-          }, 500);
-        } else {
-          throw new Error('Error al enviar el mensaje');
-        }
+        successMessage.classList.remove('hidden');
+        form.reset();
       } catch (error) {
-        // En desarrollo antes se hacía console.error; ahora solo mostramos mensaje al usuario.
-
-        // Mensaje de error más amigable con fallback
-        let errorMessageText = 'Hubo un error al enviar el mensaje. Por favor, inténtalo de nuevo más tarde.';
-        
-        if (error instanceof Error) {
-          // Errores comunes de EmailJS
-          if (error.message.includes('Invalid public key')) {
-            errorMessageText = 'Error de configuración: La clave pública de EmailJS no es válida.';
-          } else if (error.message.includes('Invalid service ID')) {
-            errorMessageText = 'Error de configuración: El ID del servicio no es válido.';
-          } else if (error.message.includes('Invalid template ID')) {
-            errorMessageText = 'Error de configuración: El ID de la plantilla no es válido.';
-          } else {
-            errorMessageText = `Error: ${error.message}`;
-          }
-        }
-
-        // Añadir siempre un canal alternativo de contacto
-        errorMessageText += ' Si el problema continúa, puedes escribirme directamente a ';
-        errorMessageText += 'adrianesba@gmail.com.';
-
-        showError(errorMessageText);
+        const fallbackText = CONTACT_COPY.validation.sendFallback.replace('{contactEmail}', CONTACT_EMAIL);
+        const message = error instanceof Error ? `${error.message} ${fallbackText}` : fallbackText;
+        showError(message);
+      } finally {
         setLoading(false);
       }
     });
   }
 
-  // Inicializar cuando el DOM esté listo
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initContactForm);
   } else {
-    // DOM ya está listo
     initContactForm();
   }
 </script>

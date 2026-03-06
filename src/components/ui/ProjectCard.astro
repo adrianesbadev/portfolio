@@ -1,94 +1,114 @@
 ---
 import type { Project } from '../../data/projects';
+import type { Locale } from '../../i18n/config';
+import { getTranslations } from '../../i18n/translations';
 import Button from './Button.astro';
-import SkillBadge from './SkillBadge.astro';
 
 interface Props {
   project: Project;
+  locale: Locale;
+  index?: number;
 }
 
-const { project } = Astro.props;
+const { project, locale, index = 0 } = Astro.props as Props;
+const t = getTranslations(locale);
+const caseNumber = String(index + 1).padStart(2, '0');
+const stackSummary = project.tags.slice(0, 4);
 ---
 
-<article
-  class="group bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl overflow-hidden hover:shadow-xl dark:hover:shadow-2xl dark:hover:shadow-primary-900/20 transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] w-full h-full flex flex-col"
-  aria-label={`Proyecto: ${project.title}`}
-  style="will-change: transform; opacity: 1; visibility: visible; min-height: 100%;"
->
-  {/* Image placeholder - puedes añadir imágenes más tarde */}
-  {project.image ? (
-    <div class="aspect-video bg-neutral-100 overflow-hidden">
-      <img
-        src={project.image}
-        alt={project.title}
-        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        loading="lazy"
-      />
-    </div>
-  ) : (
-    <div class="aspect-video bg-gradient-to-br from-primary-100 dark:from-primary-900/30 to-accent-50 dark:to-accent-900/30 flex items-center justify-center relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-primary-200/30 dark:from-primary-800/20 to-accent-200/30 dark:to-accent-800/20"></div>
-      <div class="text-primary-500 dark:text-primary-400 text-4xl font-bold opacity-30 dark:opacity-20 relative z-10">
-        {project.title.charAt(0)}
-      </div>
-    </div>
-  )}
-
-  <div class="p-6 flex-1 flex flex-col">
-    <div class="flex items-start justify-between gap-4 mb-3">
-      <h3 class="text-xl font-semibold text-neutral-900 dark:text-neutral-50 group-hover:bg-gradient-to-r group-hover:from-primary-600 group-hover:to-accent-500 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300 flex-1">
-        {project.title}
-      </h3>
-      {project.year && (
-        <span class="text-sm text-neutral-500 dark:text-neutral-400 font-medium whitespace-nowrap flex-shrink-0">
-          {project.year}
-        </span>
-      )}
-    </div>
-
-    <p class="text-neutral-600 dark:text-neutral-300 text-sm md:text-base mb-4 line-clamp-3 flex-1">
-      {project.description}
-    </p>
-
-    {/* Tags */}
-    <div class="flex flex-wrap gap-2 mb-4 min-h-[2.5rem]">
-      {project.tags.slice(0, 5).map((tag, index) => (
-        <div 
-          class="tag-animate"
-          style={`animation-delay: ${index * 50}ms;`}
-        >
-          <SkillBadge name={tag} />
+<article class="panel p-5 md:p-6" data-stagger-item aria-label={`${t.projectCard.caseAria} ${caseNumber}: ${project.title}`}>
+  <div class="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-6 md:gap-8">
+    <div>
+      {project.image && (
+        <div class="rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 mb-5">
+          <img src={project.image} alt={project.title} class="w-full aspect-video object-cover" loading="lazy" />
         </div>
-      ))}
-      {project.tags.length > 5 && (
-        <span class="text-xs text-neutral-500 dark:text-neutral-400 self-center">
-          +{project.tags.length - 5}
-        </span>
       )}
+
+      <p class="text-xs uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400 mb-2">{t.projectCard.caseLabel} {caseNumber}</p>
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <h3 class="text-2xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-100">{project.title}</h3>
+        {project.year && (
+          <span class="text-xs px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 whitespace-nowrap">
+            {project.year}
+          </span>
+        )}
+      </div>
+
+      <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed mb-4">{project.description}</p>
+
+      <dl class="space-y-3 text-sm">
+        <div>
+          <dt class="text-neutral-500 dark:text-neutral-400">{t.projectCard.problem}</dt>
+          <dd class="text-neutral-800 dark:text-neutral-200 mt-1 leading-relaxed">{project.caseStudy.problem}</dd>
+        </div>
+        <div>
+          <dt class="text-neutral-500 dark:text-neutral-400">{t.projectCard.keyDecision}</dt>
+          <dd class="text-neutral-800 dark:text-neutral-200 mt-1 leading-relaxed">{project.caseStudy.keyDecision}</dd>
+        </div>
+        <div>
+          <dt class="text-neutral-500 dark:text-neutral-400">{t.projectCard.result}</dt>
+          <dd class="text-neutral-800 dark:text-neutral-200 mt-1 leading-relaxed">{project.caseStudy.result}</dd>
+        </div>
+      </dl>
     </div>
 
-    {/* Links */}
-    <div class="flex gap-3">
-      {project.demoUrl && (
-        <Button
-          href={project.demoUrl}
-          variant="primary"
-          size="sm"
-          class="flex-1"
-        >
-          Ver Demo
-        </Button>
+    <div class="space-y-5">
+      <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-4">
+        <p class="text-xs uppercase tracking-[0.08em] text-neutral-500 dark:text-neutral-400 mb-2">{t.projectCard.roleScope}</p>
+        <p class="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed">{project.caseStudy.role}</p>
+      </div>
+
+      <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-4">
+        <p class="text-xs uppercase tracking-[0.08em] text-neutral-500 dark:text-neutral-400 mb-2">{t.projectCard.tradeoffs}</p>
+        <ul class="case-list space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
+          {project.caseStudy.tradeoffs.map((item) => (
+            <li>{item}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-4">
+        <p class="text-xs uppercase tracking-[0.08em] text-neutral-500 dark:text-neutral-400 mb-2">{t.projectCard.impact}</p>
+        <ul class="case-list space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
+          {project.caseStudy.impact.map((item) => (
+            <li>{item}</li>
+          ))}
+        </ul>
+      </div>
+
+      {project.caseStudy.nextStep && (
+        <div class="rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50/60 dark:bg-primary-900/20 p-4">
+          <p class="text-xs uppercase tracking-[0.08em] text-primary-700 dark:text-primary-300 mb-2">{t.projectCard.nextStep}</p>
+          <p class="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed">{project.caseStudy.nextStep}</p>
+        </div>
       )}
-      {project.repoUrl && (
-        <Button
-          href={project.repoUrl}
-          variant="outline"
-          size="sm"
-          class="flex-1"
-        >
-          Código
-        </Button>
-      )}
+
+      <div>
+        <p class="text-xs uppercase tracking-[0.08em] text-neutral-500 dark:text-neutral-400 mb-2">{t.projectCard.secondaryStack}</p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          {stackSummary.map((tag) => (
+            <span class="inline-flex items-center rounded-full border border-neutral-200 dark:border-neutral-700 px-2.5 py-1 text-xs text-neutral-700 dark:text-neutral-300">
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        <div class="flex gap-3">
+          {project.repoUrl ? (
+            <Button href={project.repoUrl} target="_blank" rel="noopener noreferrer" variant="outline" size="sm" class="flex-1">
+              {t.projectCard.code}
+            </Button>
+          ) : (
+            <Button href="#contact" variant="outline" size="sm" class="flex-1">
+              {t.projectCard.requestAccess}
+            </Button>
+          )}
+          <Button href="#contact" variant="primary" size="sm" class="flex-1">
+            {t.projectCard.discussCase}
+          </Button>
+        </div>
+      </div>
     </div>
   </div>
 </article>
